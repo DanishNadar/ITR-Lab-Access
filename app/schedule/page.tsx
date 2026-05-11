@@ -1,10 +1,11 @@
 import Nav from "@/components/Nav";
 import WeekCalendar from "@/components/WeekCalendar";
-import { getUpcomingRequests, getPastRequests } from "@/lib/queries";
-import { format } from "date-fns";
+import { getUpcomingRequests, getPastRequests, getCalendars } from "@/lib/queries";
+import { computeAvailability } from "@/lib/icsParser";
+import { format, addDays, startOfDay, endOfDay } from "date-fns";
 import Link from "next/link";
-import { ArrowLeft, Clock, User, CalendarDays, History } from "lucide-react";
-import { LabRequest } from "@/types";
+import { ArrowLeft, CalendarDays, History } from "lucide-react";
+import { LabRequest, ScheduleBlock, CalendarEvent } from "@/types";
 
 export const revalidate = 0;
 
@@ -19,7 +20,30 @@ const STATUS_STYLES: Record<LabRequest["status"], string> = {
 };
 
 export default async function SchedulePage() {
-  const [upcoming, past] = await Promise.all([getUpcomingRequests(), getPastRequests()]);
+  const now = new Date();
+  const [upcoming, past, calendars] = await Promise.all([
+    getUpcomingRequests(), getPastRequests(), getCalendars(),
+  ]);
+
+  const availabilityBlocks: ScheduleBlock[] = [];
+  for (const cal of calendars) {
+    const avail = computeAvailability(
+      cal.events as CalendarEvent[],
+      startOfDay(now),
+      endOfDay(addDays(now, 14)),
+      cal.personName,
+    );
+    for (const a of avail) {
+      availabilityBlocks.push({
+        id: `avail-${cal.id}-${a.start}`,
+        type: "availability",
+        start: a.start,
+        end: a.end,
+        label: `${a.personName} available`,
+        peopleInvolved: [a.personName],
+      });
+    }
+  }
 
   return (
     <>
@@ -38,7 +62,7 @@ export default async function SchedulePage() {
 
         {/* Visual week calendar */}
         <div className="mb-10 anim-slide delay-1">
-          <WeekCalendar requests={upcoming} />
+          <WeekCalendar requests={upcoming} availabilityBlocks={availabilityBlocks} />
         </div>
 
         {/* ── Upcoming log ── */}

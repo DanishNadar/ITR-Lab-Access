@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { LabRequest } from "@/types";
-import { format, addDays, startOfWeek, isSameDay, differenceInMinutes, parseISO } from "date-fns";
+import { LabRequest, ScheduleBlock } from "@/types";
+import { format, addDays, startOfWeek, isSameDay, parseISO } from "date-fns";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface CalBlock {
@@ -19,6 +19,7 @@ interface CalBlock {
 
 interface Props {
   requests: LabRequest[];
+  availabilityBlocks?: ScheduleBlock[];
 }
 
 const HOUR_START = 7;   // 7 AM
@@ -42,33 +43,45 @@ function blockStyle(block: CalBlock, dayStart: Date): React.CSSProperties {
   return { position: "absolute", top, left: "3px", right: "3px", height, zIndex: 10, overflow: "hidden" };
 }
 
-export default function WeekCalendar({ requests }: Props) {
+export default function WeekCalendar({ requests, availabilityBlocks = [] }: Props) {
   const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date(), { weekStartsOn: 0 }));
 
   const days = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
   const today = new Date();
 
-  // Build calendar blocks from requests
+  // Build calendar blocks from requests + availability
   const blocks = useMemo<CalBlock[]>(() => {
-    return requests.map((r) => {
+    const reqBlocks: CalBlock[] = requests.map((r) => {
       const start = parseISO(`${r.date}T${r.startTime}:00`);
       const end   = parseISO(`${r.date}T${r.endTime}:00`);
       return {
-        id: r.id,
-        type: "request",
-        start, end,
-        label: r.name,
-        sub: r.projectPurpose || undefined,
-        color: "text-blue-300",
-        bg: "bg-blue-950/60",
-        border: "border-blue-700/50",
+        id: r.id, type: "request", start, end,
+        label: r.name, sub: r.projectPurpose || undefined,
+        color: "text-blue-300", bg: "bg-blue-950/60", border: "border-blue-700/50",
       };
     });
-  }, [requests]);
 
-  // Blocks per day
+    const availBlocks: CalBlock[] = availabilityBlocks.map((a) => ({
+      id: a.id, type: "availability" as const,
+      start: new Date(a.start), end: new Date(a.end),
+      label: a.label,
+      color: "text-emerald-300", bg: "bg-emerald-950/40", border: "border-emerald-700/40",
+    }));
+
+    return [...reqBlocks, ...availBlocks];
+  }, [requests, availabilityBlocks]);
+
+  // Blocks per day — handles multi-day blocks by clipping to day boundaries
   function blocksForDay(day: Date): CalBlock[] {
-    return blocks.filter(b => isSameDay(b.start, day));
+    const dayStart = new Date(day.getFullYear(), day.getMonth(), day.getDate(), 0, 0, 0);
+    const dayEnd   = new Date(day.getFullYear(), day.getMonth(), day.getDate(), 23, 59, 59);
+    return blocks
+      .filter(b => b.start <= dayEnd && b.end > dayStart)
+      .map(b => ({
+        ...b,
+        start: b.start < dayStart ? dayStart : b.start,
+        end:   b.end   > dayEnd   ? dayEnd   : b.end,
+      }));
   }
 
   const totalH = (HOUR_END - HOUR_START) * 60 * PX_PER_MIN;
@@ -172,6 +185,10 @@ export default function WeekCalendar({ requests }: Props) {
         <span className="flex items-center gap-2 text-[13px] text-[#666]">
           <span className="w-3 h-3 rounded bg-blue-950/60 border border-blue-700/50" />
           Lab Request
+        </span>
+        <span className="flex items-center gap-2 text-[13px] text-[#666]">
+          <span className="w-3 h-3 rounded bg-emerald-950/40 border border-emerald-700/40" />
+          Available
         </span>
         <span className="flex items-center gap-2 text-[13px] text-[#666]">
           <span className="w-3 h-2 bg-[#c80d0d] rounded-sm" />
