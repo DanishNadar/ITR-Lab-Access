@@ -4,7 +4,8 @@ import { useState } from "react";
 import Nav from "@/components/Nav";
 import { LabRequest, LabStatus } from "@/types";
 import { LAB_STATE_CONFIG } from "@/lib/labStatus";
-import { Lock, Unlock, RefreshCw, Upload, Loader2, AlertCircle, CheckCircle2, ArrowLeft, History, CalendarDays, Globe } from "lucide-react";
+import { Lock, Unlock, RefreshCw, Upload, Loader2, AlertCircle, CheckCircle2, ArrowLeft, CalendarDays, Trash2 } from "lucide-react";
+import { CALENDAR_PALETTE, getPersonColor } from "@/lib/calendarColors";
 import Link from "next/link";
 import { format } from "date-fns";
 
@@ -35,6 +36,7 @@ export default function AdminPage() {
   const [calPerson, setCalPerson] = useState(""); const [calFile, setCalFile] = useState<File|null>(null);
   const [calLoading, setCalLoading] = useState(false); const [calMsg, setCalMsg] = useState<{ok:boolean;text:string}|null>(null);
   const [calendars, setCalendars] = useState<any[]>([]);
+  const [deletingId, setDeletingId] = useState<string|null>(null);
 
   async function auth(e: React.FormEvent) {
     e.preventDefault(); setAuthLoading(true); setAuthErr("");
@@ -69,15 +71,33 @@ export default function AdminPage() {
     setStatusLoading(false);
   }
 
+  async function fetchCalendars() {
+    const res = await fetch("/api/calendars", { headers: { "x-admin-password": pw } });
+    const d = await res.json();
+    if (d.success) setCalendars(d.data);
+  }
+
   async function uploadCal() {
     if (!calFile || !calPerson) return;
     setCalLoading(true); setCalMsg(null);
     const fd = new FormData();
     fd.append("password",pw); fd.append("personName",calPerson); fd.append("file",calFile);
     const res = await fetch("/api/calendars",{method:"POST",body:fd}); const d = await res.json();
-    if (d.success) { setCalMsg({ok:true,text:`Uploaded ${d.data.eventCount} events for ${d.data.personName}`}); setCalPerson(""); setCalFile(null); }
-    else setCalMsg({ok:false,text:d.error});
+    if (d.success) {
+      setCalMsg({ok:true,text:`Uploaded ${d.data.eventCount} events for ${d.data.personName}`});
+      setCalPerson(""); setCalFile(null);
+      fetchCalendars();
+    } else setCalMsg({ok:false,text:d.error});
     setCalLoading(false);
+  }
+
+  async function deleteCal(id: string) {
+    setDeletingId(id);
+    const res = await fetch("/api/calendars", { method:"DELETE", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({ id, password: pw }) });
+    const d = await res.json();
+    if (d.success) setCalendars(prev => prev.filter(c => c.id !== id));
+    setDeletingId(null);
   }
 
   if (!authed) return (
@@ -119,7 +139,7 @@ export default function AdminPage() {
         {/* Tabs */}
         <div className="flex gap-1.5 mb-8 bg-[#0f0f0f] p-1.5 rounded-2xl border border-[#1e1e1e] w-fit anim-slide delay-1">
           {(["status","requests","calendars"] as const).map(t => (
-            <button key={t} onClick={() => { setTab(t); if(t==="requests") fetchRequests(filter); }}
+            <button key={t} onClick={() => { setTab(t); if(t==="requests") fetchRequests(filter); if(t==="calendars") fetchCalendars(); }}
               className={`px-5 py-2 rounded-xl text-[15px] font-medium transition-all capitalize ${
                 tab===t ? "bg-[#1c1c1c] text-white border border-[#2a2a2a]" : "text-[#666] hover:text-[#aaa]"
               }`}>{t}</button>
@@ -252,6 +272,35 @@ export default function AdminPage() {
                 </button>
               </div>
             </div>
+
+            {calendars.length > 0 && (() => {
+              const allNames = [...calendars].sort((a,b) => a.personName.localeCompare(b.personName)).map(c => c.personName);
+              return (
+                <div className="card overflow-hidden">
+                  <p className="text-[11px] uppercase tracking-widest text-[#444] px-5 pt-5 pb-4 border-b border-[#1a1a1a]">Uploaded Calendars</p>
+                  <div className="divide-y divide-[#141414]">
+                    {[...calendars].sort((a,b)=>a.personName.localeCompare(b.personName)).map(cal => {
+                      const pc = getPersonColor(cal.personName, allNames);
+                      const isDeleting = deletingId === cal.id;
+                      return (
+                        <div key={cal.id} className="flex items-center gap-4 px-5 py-4">
+                          <span className={`w-3 h-3 rounded-full shrink-0 ${pc.dot}`} />
+                          <div className="flex-1 min-w-0">
+                            <p className={`text-[15px] font-medium ${pc.color}`}>{cal.personName}</p>
+                            <p className="text-[12px] text-[#555] truncate">{cal.uploadedFileName} · {cal.events?.length ?? 0} events</p>
+                          </div>
+                          <button onClick={() => deleteCal(cal.id)} disabled={isDeleting}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] text-[#666] border border-[#252525] hover:border-red-800/60 hover:text-red-400 hover:bg-red-950/20 transition-all disabled:opacity-50">
+                            {isDeleting ? <Loader2 size={13} className="animate-spin"/> : <Trash2 size={13}/>}
+                            {isDeleting ? "Removing…" : "Remove"}
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })()}
 
             <div className="card p-6">
               <p className="text-[11px] uppercase tracking-widest text-[#444] mb-3">Discord Bot API Endpoints</p>

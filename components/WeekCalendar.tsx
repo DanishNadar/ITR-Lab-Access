@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { LabRequest, ScheduleBlock } from "@/types";
+import { getPersonColor } from "@/lib/calendarColors";
 import { format, addDays, startOfWeek, isSameDay, parseISO } from "date-fns";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
@@ -50,25 +51,33 @@ export default function WeekCalendar({ requests, availabilityBlocks = [] }: Prop
   const today = new Date();
 
   // Build calendar blocks from requests + availability
-  const blocks = useMemo<CalBlock[]>(() => {
+  const { blocks, personColorMap } = useMemo(() => {
+    const allPersonNames = [...new Set(availabilityBlocks.map(a => a.peopleInvolved?.[0] ?? a.label))].sort();
+
     const reqBlocks: CalBlock[] = requests.map((r) => {
       const start = parseISO(`${r.date}T${r.startTime}:00`);
       const end   = parseISO(`${r.date}T${r.endTime}:00`);
       return {
-        id: r.id, type: "request", start, end,
+        id: r.id, type: "request" as const, start, end,
         label: r.name, sub: r.projectPurpose || undefined,
         color: "text-blue-300", bg: "bg-blue-950/60", border: "border-blue-700/50",
       };
     });
 
-    const availBlocks: CalBlock[] = availabilityBlocks.map((a) => ({
-      id: a.id, type: "availability" as const,
-      start: new Date(a.start), end: new Date(a.end),
-      label: a.label,
-      color: "text-emerald-300", bg: "bg-emerald-950/40", border: "border-emerald-700/40",
-    }));
+    const colorMap = new Map<string, ReturnType<typeof getPersonColor>>();
+    const availBlocks: CalBlock[] = availabilityBlocks.map((a) => {
+      const personName = a.peopleInvolved?.[0] ?? a.label;
+      if (!colorMap.has(personName)) colorMap.set(personName, getPersonColor(personName, allPersonNames));
+      const pc = colorMap.get(personName)!;
+      return {
+        id: a.id, type: "availability" as const,
+        start: new Date(a.start), end: new Date(a.end),
+        label: a.label,
+        color: pc.color, bg: pc.bg, border: pc.border,
+      };
+    });
 
-    return [...reqBlocks, ...availBlocks];
+    return { blocks: [...reqBlocks, ...availBlocks], personColorMap: colorMap };
   }, [requests, availabilityBlocks]);
 
   // Blocks per day — handles multi-day blocks by clipping to day boundaries
@@ -181,15 +190,17 @@ export default function WeekCalendar({ requests, availabilityBlocks = [] }: Prop
       </div>
 
       {/* Legend */}
-      <div className="flex items-center gap-5 px-5 py-3 border-t border-[#1e1e1e]">
+      <div className="flex flex-wrap items-center gap-x-5 gap-y-2 px-5 py-3 border-t border-[#1e1e1e]">
         <span className="flex items-center gap-2 text-[13px] text-[#666]">
           <span className="w-3 h-3 rounded bg-blue-950/60 border border-blue-700/50" />
           Lab Request
         </span>
-        <span className="flex items-center gap-2 text-[13px] text-[#666]">
-          <span className="w-3 h-3 rounded bg-emerald-950/40 border border-emerald-700/40" />
-          Available
-        </span>
+        {[...personColorMap.entries()].map(([name, pc]) => (
+          <span key={name} className="flex items-center gap-2 text-[13px] text-[#666]">
+            <span className={`w-3 h-3 rounded ${pc.bg} ${pc.border} border`} />
+            {name}
+          </span>
+        ))}
         <span className="flex items-center gap-2 text-[13px] text-[#666]">
           <span className="w-3 h-2 bg-[#c80d0d] rounded-sm" />
           Current time
