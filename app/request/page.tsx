@@ -1,7 +1,8 @@
 import Nav from "@/components/Nav";
 import LabRequestForm from "@/components/LabRequestForm";
 import Link from "next/link";
-import { ArrowLeft, Zap } from "lucide-react";
+import Image from "next/image";
+import { ArrowLeft } from "lucide-react";
 
 export default function RequestPage() {
   return (
@@ -13,9 +14,7 @@ export default function RequestPage() {
             <ArrowLeft size={13} /> Back to home
           </Link>
           <div className="flex items-center gap-3 mb-3">
-            <div className="w-9 h-9 rounded-xl bg-[#c80d0d] flex items-center justify-center">
-              <Zap size={17} className="text-white fill-white" />
-            </div>
+            <Image src="/ITR_Logo.png" alt="ITR Logo" width={36} height={36} className="rounded-xl" />
             <span className="text-[13px] uppercase tracking-widest text-[#555]">Illinois Tech Robotics</span>
           </div>
           <h1 className="text-4xl font-bold text-white mb-2" style={{fontFamily:"var(--font-display)",letterSpacing:".05em"}}>

@@ -3,7 +3,8 @@ import { getLabStatus, getUpcomingRequests } from "@/lib/queries";
 import LabStatusCard from "@/components/LabStatusCard";
 import RequestCard from "@/components/RequestCard";
 import Nav from "@/components/Nav";
-import { CalendarDays, ClipboardList, Settings, Zap } from "lucide-react";
+import Image from "next/image";
+import { CalendarDays, ClipboardList, Settings } from "lucide-react";
 
 export const revalidate = 0;
 
@@ -18,9 +19,7 @@ export default async function HomePage() {
         {/* Hero */}
         <div className="mb-10 anim-slide">
           <div className="flex items-center gap-2.5 mb-4">
-            <div className="w-9 h-9 rounded-xl bg-[#c80d0d] flex items-center justify-center">
-              <Zap size={17} className="text-white fill-white" />
-            </div>
+            <Image src="/ITR_Logo.png" alt="ITR Logo" width={36} height={36} className="rounded-xl" />
             <span className="text-[13px] uppercase tracking-widest text-[#555] font-medium">Illinois Tech Robotics</span>
           </div>
           <h1 className="text-5xl sm:text-6xl font-bold text-white leading-none mb-3"

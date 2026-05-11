@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Zap, Calendar, ClipboardList, Settings } from "lucide-react";
+import Image from "next/image";
+import { Home, Calendar, ClipboardList, Settings } from "lucide-react";
 
 export default function Nav() {
   const path = usePathname();
   const links = [
-    { href: "/", label: "Home", icon: Zap },
+    { href: "/", label: "Home", icon: Home },
     { href: "/request", label: "Request", icon: ClipboardList },
     { href: "/schedule", label: "Schedule", icon: Calendar },
     { href: "/admin", label: "Admin", icon: Settings },
@@ -16,9 +17,7 @@ export default function Nav() {
     <nav className="sticky top-0 z-50 border-b border-[#1e1e1e] bg-[#0b0b0b]/90 backdrop-blur-md">
       <div className="max-w-6xl mx-auto px-5 h-15 flex items-center justify-between" style={{height:"58px"}}>
         <Link href="/" className="flex items-center gap-2.5 group">
-          <div className="w-8 h-8 rounded-lg bg-[#c80d0d] flex items-center justify-center">
-            <Zap size={15} className="text-white fill-white" />
-          </div>
+          <Image src="/ITR_Logo.png" alt="ITR Logo" width={32} height={32} className="rounded-lg" />
           <span className="font-semibold text-[15px] text-white hidden sm:block tracking-tight">
             Elevate Underground
           </span>
