@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { setLabStatus } from "@/lib/queries";
 import { verifyBotApiKey, verifyAdminPassword } from "@/lib/labStatus";
+import { sendLabStatusNotification } from "@/lib/email";
 
 export async function POST(req: NextRequest) {
   const apiKey = req.headers.get("x-api-key") ?? req.headers.get("authorization")?.replace("Bearer ", "");
@@ -10,7 +11,9 @@ export async function POST(req: NextRequest) {
 
   const updated = await setLabStatus({
     currentState: "limbo", updatedBy: apiKey ? "discord-bot" : "admin",
+    responsiblePerson: body.responsiblePerson ?? null,
     notes: body.notes ?? "Opener has left or expected leave time has passed.",
   });
+  sendLabStatusNotification(updated).catch((e) => console.error("[Discord] Status notify failed:", e.message));
   return NextResponse.json({ success: true, data: updated });
 }

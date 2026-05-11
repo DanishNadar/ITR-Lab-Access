@@ -24,7 +24,7 @@ export default async function HomePage() {
           </div>
           <h1 className="text-5xl sm:text-6xl font-bold text-white leading-none mb-3"
             style={{ fontFamily:"var(--font-display)", letterSpacing:".05em" }}>
-            ELEVATE UNDERGROUND<br />
+            ITR<br />
             <span className="text-[#c80d0d]">LAB ACCESS</span>
           </h1>
           <p className="text-[17px] text-[#666] max-w-lg leading-relaxed">

@@ -19,7 +19,7 @@ export default function Nav() {
         <Link href="/" className="flex items-center gap-2.5 group">
           <Image src="/ITR_Logo.png" alt="ITR Logo" width={32} height={32} className="rounded-lg" />
           <span className="font-semibold text-[15px] text-white hidden sm:block tracking-tight">
-            Elevate Underground
+            Illinois Tech Robotics
           </span>
         </Link>
         <div className="flex items-center gap-1">

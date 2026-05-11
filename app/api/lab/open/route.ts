@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { setLabStatus } from "@/lib/queries";
 import { verifyBotApiKey, verifyAdminPassword } from "@/lib/labStatus";
+import { sendLabStatusNotification } from "@/lib/email";
 
 export async function POST(req: NextRequest) {
   const apiKey = req.headers.get("x-api-key") ?? req.headers.get("authorization")?.replace("Bearer ", "");
@@ -13,5 +14,6 @@ export async function POST(req: NextRequest) {
     responsiblePerson: body.responsiblePerson ?? body.updatedBy ?? null,
     notes: body.notes ?? null,
   });
+  sendLabStatusNotification(updated).catch((e) => console.error("[Discord] Status notify failed:", e.message));
   return NextResponse.json({ success: true, data: updated });
 }

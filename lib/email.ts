@@ -1,4 +1,4 @@
-import { LabRequest } from "@/types";
+import { LabRequest, LabStatus } from "@/types";
 import { format } from "date-fns";
 
 function fmt12(t: string) {
@@ -57,4 +57,58 @@ export async function sendLabRequestEmail(request: LabRequest): Promise<void> {
   }
 
   console.log("[Discord] Notification sent.");
+}
+
+const STATE_META: Record<string, { color: number; emoji: string; title: string }> = {
+  open:   { color: 0x34d399, emoji: "🟢", title: "Lab is Now Open"   },
+  closed: { color: 0xef4444, emoji: "🔴", title: "Lab is Now Closed" },
+  limbo:  { color: 0xfbbf24, emoji: "🟡", title: "Lab is in Limbo"   },
+};
+
+export async function sendLabStatusNotification(status: LabStatus): Promise<void> {
+  const webhookUrl = process.env.DISCORD_WEBHOOK_URL;
+  if (!webhookUrl) {
+    console.warn("[Discord] DISCORD_WEBHOOK_URL not set - skipping status notification.");
+    return;
+  }
+
+  const meta = STATE_META[status.currentState] ?? STATE_META.limbo;
+  const updatedAt = format(new Date(status.updatedAt), "MMMM d, yyyy 'at' h:mm a");
+
+  const fields = [
+    { name: "Updated by", value: status.updatedBy, inline: true },
+    { name: "Time", value: updatedAt, inline: true },
+    ...(status.responsiblePerson
+      ? [{ name: "Responsible Person", value: status.responsiblePerson, inline: false }]
+      : []),
+    ...(status.notes
+      ? [{ name: "Notes", value: status.notes, inline: false }]
+      : []),
+    ...(status.currentState === "limbo" && !status.responsiblePerson
+      ? [{ name: "⚠️ Action Required", value: "No responsible person assigned. Someone must formally close the lab or take responsibility.", inline: false }]
+      : []),
+  ];
+
+  const body = {
+    username: "Elevate Underground Lab",
+    embeds: [{
+      title: `${meta.emoji} ${meta.title}`,
+      color: meta.color,
+      fields,
+      footer: { text: "Elevate Underground Lab Access System" },
+    }],
+  };
+
+  const res = await fetch(webhookUrl, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Discord webhook failed: ${res.status} ${text}`);
+  }
+
+  console.log(`[Discord] Lab status notification sent: ${status.currentState}`);
 }
