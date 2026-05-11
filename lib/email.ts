@@ -18,7 +18,11 @@ export async function sendLabRequestEmail(request: LabRequest): Promise<void> {
     return;
   }
 
-  const submittedAt = format(new Date(request.createdAt), "MMMM d, yyyy 'at' h:mm a");
+  const submittedAt = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Chicago",
+    month: "long", day: "numeric", year: "numeric",
+    hour: "numeric", minute: "2-digit", hour12: true,
+  }).format(new Date(request.createdAt)) + " CDT";
 
   const fields = [
     { name: "Date", value: fmtDate(request.date), inline: true },
@@ -73,7 +77,11 @@ export async function sendLabStatusNotification(status: LabStatus): Promise<void
   }
 
   const meta = STATE_META[status.currentState] ?? STATE_META.limbo;
-  const updatedAt = format(new Date(status.updatedAt), "MMMM d, yyyy 'at' h:mm a");
+  const updatedAt = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Chicago",
+    month: "long", day: "numeric", year: "numeric",
+    hour: "numeric", minute: "2-digit", hour12: true,
+  }).format(new Date(status.updatedAt)) + " CDT";
 
   const fields = [
     { name: "Updated by", value: status.updatedBy, inline: true },
