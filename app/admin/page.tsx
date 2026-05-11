@@ -30,7 +30,7 @@ export default function AdminPage() {
   const [filter, setFilter] = useState<Filter>("upcoming");
   const [labStatus, setLabStatus] = useState<LabStatus | null>(null);
   const [newState, setNewState] = useState<"open"|"closed"|"limbo">("closed");
-  const [person, setPerson] = useState(""); const [notes, setNotes] = useState("");
+  const [person, setPerson] = useState(""); const [otherPerson, setOtherPerson] = useState(""); const [notes, setNotes] = useState("");
   const [statusLoading, setStatusLoading] = useState(false);
   const [statusMsg, setStatusMsg] = useState<{ok:boolean;text:string}|null>(null);
   const [calPerson, setCalPerson] = useState(""); const [calFile, setCalFile] = useState<File|null>(null);
@@ -64,7 +64,7 @@ export default function AdminPage() {
     setStatusLoading(true); setStatusMsg(null);
     const res = await fetch("/api/admin", { method:"POST", headers:{"Content-Type":"application/json"},
       body: JSON.stringify({ password:pw, action:"updateStatus", state:newState,
-        responsiblePerson: person||undefined, notes: notes||undefined }) });
+        responsiblePerson: (person==="Other" ? otherPerson : person)||undefined, notes: notes||undefined }) });
     const d = await res.json();
     if (d.success) { setLabStatus(d.data); setStatusMsg({ok:true,text:`Lab marked as ${newState}`}); }
     else setStatusMsg({ok:false,text:d.error});
@@ -189,9 +189,13 @@ export default function AdminPage() {
                       <option value="Danish">Danish</option>
                       <option value="Fannie">Fannie</option>
                       <option value="Eli">Eli</option>
+                      <option value="Other">Other</option>
                     </select>
                     <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#555]">▾</span>
                   </div>
+                  {person==="Other" && (
+                    <input className="input mt-3" placeholder="Specify who and why…" value={otherPerson} onChange={e=>setOtherPerson(e.target.value)} autoFocus />
+                  )}
                 </div>
               )}
               <div className="mb-5">
