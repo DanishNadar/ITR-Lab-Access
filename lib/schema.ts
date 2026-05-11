@@ -51,7 +51,7 @@ export const labStatus = pgTable("lab_status", {
 // ---- availability_calendars ----
 export const availabilityCalendars = pgTable("availability_calendars", {
   id: text("id").primaryKey(),
-  personName: text("person_name").notNull(),
+  personName: text("person_name").notNull().unique(),
   uploadedFileName: text("uploaded_file_name").notNull(),
   // Events stored as JSONB array of {summary, start, end, uid}
   events: jsonb("events").$type<{ summary: string; start: string; end: string; uid?: string }[]>().default([]),

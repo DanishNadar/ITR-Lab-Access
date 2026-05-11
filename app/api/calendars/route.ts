@@ -13,12 +13,17 @@ export async function POST(req: NextRequest) {
   if (!personName || !file) return NextResponse.json({ success: false, error: "personName and file required" }, { status: 400 });
   if (!file.name.endsWith(".ics")) return NextResponse.json({ success: false, error: "Only .ics files supported" }, { status: 400 });
 
-  const events = parseICS(await file.text());
-  await upsertCalendar({
-    id: `cal_${Date.now()}`,
-    personName, uploadedFileName: file.name, events,
-  });
-  return NextResponse.json({ success: true, data: { personName, eventCount: events.length } });
+  try {
+    const events = parseICS(await file.text());
+    await upsertCalendar({
+      id: `cal_${Date.now()}`,
+      personName, uploadedFileName: file.name, events,
+    });
+    return NextResponse.json({ success: true, data: { personName, eventCount: events.length } });
+  } catch (err) {
+    console.error("[POST /api/calendars]", err);
+    return NextResponse.json({ success: false, error: "Failed to save calendar" }, { status: 500 });
+  }
 }
 
 export async function GET(req: NextRequest) {
