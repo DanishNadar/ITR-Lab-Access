@@ -12,9 +12,6 @@ npm install
 ```
 
 ### 2. Set up environment variables
-```bash
-cp .env.example .env.local
-```
 Open `.env.local` and fill in your values (see sections below).
 
 ### 3. Set up the database
