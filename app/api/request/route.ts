@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
       specialEquipment: body.specialEquipment, notes: body.notes,
     });
 
-    sendLabRequestEmail(newReq).catch((e) => console.error("[Email]", e));
+    sendLabRequestEmail(newReq).catch((e) => console.error("[Email] Failed to send:", e.message, e.response || ""));
     return NextResponse.json({ success: true, data: newReq }, { status: 201 });
   } catch (e: any) {
     console.error("[API /request]", e);

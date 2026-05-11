@@ -20,14 +20,12 @@
     "drizzle-orm": "^0.33.0",
     "lucide-react": "^0.400.0",
     "next": "15.5.18",
-    "nodemailer": "^6.9.14",
     "react": "^18",
     "react-day-picker": "^8.10.1",
     "react-dom": "^18"
   },
   "devDependencies": {
     "@types/node": "^20",
-    "@types/nodemailer": "^6.4.15",
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "autoprefixer": "^10.0.1",
