@@ -180,6 +180,20 @@ export default function AdminPage() {
                   <input className="input" placeholder="Who is supervising?" value={person} onChange={e=>setPerson(e.target.value)} />
                 </div>
               )}
+              {newState==="limbo" && (
+                <div className="mb-4">
+                  <label className="text-[14px] text-[#666] block mb-2">Who is left responsible?</label>
+                  <div className="relative">
+                    <select className="input pr-9 cursor-pointer" value={person} onChange={e=>setPerson(e.target.value)}>
+                      <option value="">— Select executive member —</option>
+                      <option value="Danish">Danish</option>
+                      <option value="Fannie">Fannie</option>
+                      <option value="Eli">Eli</option>
+                    </select>
+                    <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#555]">▾</span>
+                  </div>
+                </div>
+              )}
               <div className="mb-5">
                 <label className="text-[14px] text-[#666] block mb-2">Notes (optional)</label>
                 <textarea className="input resize-none h-20 text-[15px]" placeholder="Additional context…" value={notes} onChange={e=>setNotes(e.target.value)} />

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyAdminPassword } from "@/lib/labStatus";
 import { setLabStatus, getAllRequests, getUpcomingRequests, getPastRequests, updateRequestStatus } from "@/lib/queries";
+import { sendLabStatusNotification } from "@/lib/email";
 import { LabState } from "@/types";
 
 export async function POST(req: NextRequest) {
@@ -19,6 +20,7 @@ export async function POST(req: NextRequest) {
         notes: body.notes ?? null,
         ...(body.state === "closed" ? { formallyClosedAt: new Date().toISOString() } : {}),
       });
+      sendLabStatusNotification(updated).catch((e) => console.error("[Discord] Status notify failed:", e.message));
       return NextResponse.json({ success: true, data: updated });
     }
     case "getRequests": {
